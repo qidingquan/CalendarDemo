@@ -361,4 +361,50 @@ public class CalendarView extends ViewPager {
     public DateBean getDateInit() {
         return CalendarUtil.getDateBean(dateInit[0], dateInit[1], dateInit[2]);
     }
+
+    /**
+     * 设置开始日期
+     * @param year
+     * @param month
+     * @param day
+     */
+    public void setStartDate(int year,int month,int day) {
+        if (dateStart == null) {
+            dateStart = new int[]{year, month, day};
+        }
+        dateStart[0]=year;
+        dateStart[1]=month;
+        dateStart[2]=day;
+    }
+
+    /**
+     * 设置结束日期
+     * @param year
+     * @param month
+     * @param day
+     */
+    public void setEndDate(int year,int month,int day) {
+        if (dateEnd == null) {
+            dateEnd = new int[]{year, month, day};
+        }
+        dateEnd[0]=year;
+        dateEnd[1]=month;
+        dateEnd[2]=day;
+    }
+
+    /**
+     * 设置开始日期之前能不能用
+     * @param disableBefore
+     */
+    public void setStartBeforeDisable(boolean disableBefore) {
+        this.disableBefore = disableBefore;
+    }
+
+    /**
+     * 设置结束日期之后能不能用
+     * @param disableAfter
+     */
+    public void setEndAfterDisable(boolean disableAfter) {
+        this.disableAfter = disableAfter;
+    }
 }

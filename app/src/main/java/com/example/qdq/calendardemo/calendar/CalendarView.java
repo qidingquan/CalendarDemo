@@ -28,7 +28,8 @@ public class CalendarView extends ViewPager {
     private boolean showLunar = true;//是否显示农历
     private boolean showHoliday = true;//是否显示节假日(不显示农历则节假日无法显示，节假日会覆盖农历显示)
     private boolean showTerm = true;//是否显示节气
-    private boolean disableBefore = false;//是否禁用默认选中日期前的所有日期
+    private boolean disableBefore = false;//是否禁用开始日期前的所有日期
+    private boolean disableAfter = false;//是否禁用结束日期后的所有日期
     private boolean switchChoose = true;//单选时切换月份，是否选中上次的日期
     private int colorSolar = Color.BLACK;//阳历的日期颜色
     private int colorLunar = Color.parseColor("#999999");//阴历的日期颜色
@@ -39,7 +40,7 @@ public class CalendarView extends ViewPager {
     private int dayBg = R.drawable.blue_circle;//选中的背景
 
     private int count;//ViewPager的页数
-    private int[] lastClickDate = new int[2];//上次点击的日期
+    private int[] lastClickDate = new int[4];//上次点击的日期 位置 日 月 年
     private SparseArray<HashSet<Integer>> chooseDate = new SparseArray<>();//记录多选时全部选中的日期
 
     private CalendarPagerAdapter calendarPagerAdapter;
@@ -77,6 +78,8 @@ public class CalendarView extends ViewPager {
                 showTerm = ta.getBoolean(attr, true);
             } else if (attr == R.styleable.CalendarView_disable_before) {
                 disableBefore = ta.getBoolean(attr, false);
+            } else if (attr == R.styleable.CalendarView_disable_after) {
+                disableAfter = ta.getBoolean(attr, false);
             } else if (attr == R.styleable.CalendarView_switch_choose) {
                 switchChoose = ta.getBoolean(attr, true);
             } else if (attr == R.styleable.CalendarView_color_solar) {
@@ -121,7 +124,7 @@ public class CalendarView extends ViewPager {
         count = (dateEnd[0] - dateStart[0]) * 12 + dateEnd[1] - dateStart[1] + 1;
         calendarPagerAdapter = new CalendarPagerAdapter(count);
         calendarPagerAdapter.setAttrValues(dateInit, dateStart, dateEnd,
-                showLastNext, showLunar, showHoliday, showTerm, disableBefore,
+                showLastNext, showLunar, showHoliday, showTerm, disableBefore, disableAfter,
                 colorSolar, colorLunar, colorHoliday, colorChoose,
                 sizeSolar, sizeLunar, dayBg);
 
@@ -132,6 +135,8 @@ public class CalendarView extends ViewPager {
         currentPosition = CalendarUtil.dateToPosition(dateInit[0], dateInit[1], dateStart[0], dateStart[1]);
         lastClickDate[0] = currentPosition;
         lastClickDate[1] = dateInit[2];
+        lastClickDate[2]=dateInit[1];
+        lastClickDate[3]=dateInit[0];
 
         setLastChooseDate(dateInit[2], true);//因为有默认选中日期，所以需要此操作
         setCurrentItem(currentPosition, false);
@@ -139,10 +144,10 @@ public class CalendarView extends ViewPager {
         addOnPageChangeListener(new SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                refreshMonthView(position);
+                int[] date = CalendarUtil.positionToDate(position, dateStart[0], dateStart[1]);
+                refreshMonthView(lastClickDate[3], lastClickDate[2], date[0], date[1], position);
                 currentPosition = position;
                 if (pagerChangeListener != null) {
-                    int[] date = CalendarUtil.positionToDate(position, dateStart[0], dateStart[1]);
                     pagerChangeListener.onPagerChanged(new int[]{date[0], date[1], lastClickDate[1]});
                 }
             }
@@ -172,16 +177,18 @@ public class CalendarView extends ViewPager {
     /**
      * 刷新MonthView
      *
+     * @param year     当前显示的年
+     * @param month    当前显示的月
      * @param position
      */
-    private void refreshMonthView(int position) {
+    private void refreshMonthView(int lastYear, int lastMonth, int year, int month, int position) {
         MonthView monthView = calendarPagerAdapter.getViews().get(position);
         if (itemChooseListener != null) {
             if (chooseDate.get(position) != null)
                 monthView.multiChooseRefresh(chooseDate.get(position));
         } else {
             boolean flag = (!switchChoose && lastClickDate[0] == position) || switchChoose;
-            monthView.refresh(lastClickDate[1], flag);
+            monthView.refresh(lastYear, lastMonth, year, month, lastClickDate[1], flag);
         }
     }
 
@@ -190,9 +197,11 @@ public class CalendarView extends ViewPager {
      *
      * @param day
      */
-    public void setLastClickDay(int day) {
+    public void setLastClickDay(int year, int month, int day) {
         lastClickDate[0] = currentPosition;
         lastClickDate[1] = day;
+        lastClickDate[2] = month;
+        lastClickDate[3] = year;
     }
 
     /**
@@ -269,8 +278,10 @@ public class CalendarView extends ViewPager {
         int destPosition = CalendarUtil.dateToPosition(SolarUtil.getCurrentDate()[0], SolarUtil.getCurrentDate()[1], dateStart[0], dateStart[1]);
         lastClickDate[0] = destPosition;
         lastClickDate[1] = SolarUtil.getCurrentDate()[2];
+        lastClickDate[2] = SolarUtil.getCurrentDate()[1];
+        lastClickDate[3] = SolarUtil.getCurrentDate()[0];
         if (destPosition == currentPosition) {
-            refreshMonthView(destPosition);
+            refreshMonthView(lastClickDate[3], lastClickDate[2], lastClickDate[3], lastClickDate[2], destPosition);
         } else {
             setCurrentItem(destPosition, false);
         }
@@ -289,6 +300,8 @@ public class CalendarView extends ViewPager {
             lastClickDate[0] = destPosition;
         }
         lastClickDate[1] = day != 0 ? day : lastClickDate[1];
+        lastClickDate[2] = month != 0 ? month : lastClickDate[2];
+        lastClickDate[3] = year != 0 ? year : lastClickDate[3];
         setCurrentItem(destPosition, false);
     }
 

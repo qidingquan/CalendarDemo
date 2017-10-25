@@ -15,8 +15,10 @@
         <attr name="date_end" format="string" />
         <!--默认展示、选中的日期(xxxx.x.x)-->
         <attr name="date_init" format="string" />
-        <!--是否禁用默认选中日期前的所有日期-->
+        <!--是否禁用开始日期前的所有日期-->
         <attr name="disable_before" format="boolean" />
+        <!--是否禁用结束日期后的所有日期-->
+        <attr name="disable_after" format="boolean" />
         <!--阳历的日期颜色-->
         <attr name="color_solar" format="color" />
         <!--阳历的日期尺寸-->

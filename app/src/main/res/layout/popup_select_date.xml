@@ -47,8 +47,10 @@
     <com.example.qdq.calendardemo.calendar.CalendarView
         android:id="@+id/calendarView"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        app:date_start="2017.10.24"
-        app:date_end="2017.11.20"
-        />
+        android:layout_height="200dp"/>
+        <!--app:date_start="2017.10.1"
+        app:date_end="2017.11.30"
+        app:disable_after="true"
+        app:disable_before="true"-->
+
 </LinearLayout>

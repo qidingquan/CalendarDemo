@@ -24,6 +24,7 @@ public class CalendarPagerAdapter extends PagerAdapter {
     private boolean showHoliday;
     private boolean showTerm;
     private boolean disableBefore;
+    private boolean disableAfter;
     private int colorSolar;
     private int colorLunar;
     private int colorHoliday;
@@ -61,7 +62,7 @@ public class CalendarPagerAdapter extends PagerAdapter {
         int[] date = CalendarUtil.positionToDate(position, dateStart[0], dateStart[1]);
         view.setAttrValues(dateInit, dateStart,dateEnd,
                 showLastNext, showLunar, showHoliday, showTerm, disableBefore,
-                colorSolar, colorLunar, colorHoliday, colorChoose,
+                disableAfter,colorSolar, colorLunar, colorHoliday, colorChoose,
                 sizeSolar, sizeLunar, dayBg);
         view.setOnCalendarViewAdapter(item_layout, calendarViewAdapter);
         view.setDateList(CalendarUtil.getMonthDate(date[0], date[1]), SolarUtil.getMonthDays(date[0], date[1]));
@@ -89,7 +90,7 @@ public class CalendarPagerAdapter extends PagerAdapter {
 
     public void setAttrValues(int[] dateInit, int[] dateStart, int[] dateEnd,
                               boolean showLastNext, boolean showLunar, boolean showHoliday, boolean showTerm, boolean disableBefore,
-                              int colorSolar, int colorLunar, int colorHoliday, int colorChoose,
+                              boolean disableAfter,int colorSolar, int colorLunar, int colorHoliday, int colorChoose,
                               int sizeSolar, int sizeLunar, int dayBg) {
         this.dateInit = dateInit;
         this.dateStart = dateStart;
@@ -99,6 +100,7 @@ public class CalendarPagerAdapter extends PagerAdapter {
         this.showHoliday = showHoliday;
         this.showTerm = showTerm;
         this.disableBefore = disableBefore;
+        this.disableAfter=disableAfter;
         this.colorSolar = colorSolar;
         this.colorLunar = colorLunar;
         this.colorHoliday = colorHoliday;

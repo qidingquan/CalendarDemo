@@ -35,6 +35,7 @@ public class MonthView extends ViewGroup {
     private boolean showHoliday;
     private boolean showTerm;
     private boolean disableBefore;
+    private boolean disableAfter;
     private int colorSolar;
     private int colorLunar;
     private int colorHoliday;
@@ -80,7 +81,7 @@ public class MonthView extends ViewGroup {
 
             if (date.getType() == 0) {
                 lastMonthDays++;
-                if (!showLastNext) {
+                if (!showLastNext) {//本月中不显示上一月数据
                     addView(new View(mContext), i);
                     continue;
                 }
@@ -88,7 +89,7 @@ public class MonthView extends ViewGroup {
 
             if (date.getType() == 2) {
                 nextMonthDays++;
-                if (!showLastNext) {
+                if (!showLastNext) {//本月中不显示下一月数据
                     addView(new View(mContext), i);
                     continue;
                 }
@@ -154,30 +155,21 @@ public class MonthView extends ViewGroup {
                 findInitShowDay = true;
             }
 
-            if (date.getType() == 1) {
-                view.setTag(date.getSolar()[2]);
-                if ((date.getSolar()[0] < dateInit[0]
-                        || (date.getSolar()[0] == dateInit[0] && date.getSolar()[1] < dateInit[1])
-                        || (date.getSolar()[0] == dateInit[0] && date.getSolar()[1] == dateInit[1] && date.getSolar()[2] < dateInit[2]))) {
-                    if (disableBefore) {
-                        solarDay.setTextColor(colorLunar);
-                        lunarDay.setTextColor(colorLunar);
-                        view.setTag(-1);
-                        addView(view, i);
-                        continue;
-                    }
-                }
-                //小于开始时间则不能使用
+            view.setTag(date.getSolar()[2]);
+            //小于开始时间则不能使用
+            if (disableBefore) {
                 if ((date.getSolar()[0] < dateStart[0]
                         || (date.getSolar()[0] == dateStart[0] && date.getSolar()[1] < dateStart[1])
                         || (date.getSolar()[0] == dateStart[0] && date.getSolar()[1] == dateStart[1] && date.getSolar()[2] < dateStart[2]))) {
-                        solarDay.setTextColor(colorLunar);
-                        lunarDay.setTextColor(colorLunar);
-                        view.setTag(-1);
-                        addView(view, i);
-                        continue;
+                    solarDay.setTextColor(colorLunar);
+                    lunarDay.setTextColor(colorLunar);
+                    view.setTag(-1);
+                    addView(view, i);
+                    continue;
                 }
-                //大于结束时间不能用
+            }
+            //大于结束时间不能用
+            if (disableAfter) {
                 if ((date.getSolar()[0] > dateEnd[0]
                         || (date.getSolar()[0] == dateEnd[0] && date.getSolar()[1] > dateEnd[1])
                         || (date.getSolar()[0] == dateEnd[0] && date.getSolar()[1] == dateEnd[1] && date.getSolar()[2] > dateEnd[2]))) {
@@ -192,6 +184,8 @@ public class MonthView extends ViewGroup {
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    int year = date.getSolar()[0];
+                    int month = date.getSolar()[1];
                     int day = date.getSolar()[2];
                     CalendarView calendarView = (CalendarView) getParent();
                     OnMonthItemClickListener clickListener = calendarView.getItemClickListener();
@@ -211,7 +205,7 @@ public class MonthView extends ViewGroup {
                             calendarView.setLastChooseDate(day, flag);
                             chooseListener.onMonthItemChoose(v, date, flag);
                         } else {
-                            calendarView.setLastClickDay(day);
+                            calendarView.setLastClickDay(year, month, day);
                             if (lastClickedView != null) {
                                 setDayColor(lastClickedView, COLOR_RESET);
                             }
@@ -223,13 +217,13 @@ public class MonthView extends ViewGroup {
                             }
                         }
                     } else if (date.getType() == 0) {//点击上月
-                        calendarView.setLastClickDay(day);
+                        calendarView.setLastClickDay(year, month, day);
                         calendarView.lastMonth();
                         if (clickListener != null) {
                             clickListener.onMonthItemClick(v, date);
                         }
                     } else if (date.getType() == 2) {//点击下月
-                        calendarView.setLastClickDay(day);
+                        calendarView.setLastClickDay(year, month, day);
                         calendarView.nextMonth();
                         if (clickListener != null) {
                             clickListener.onMonthItemClick(v, date);
@@ -326,17 +320,29 @@ public class MonthView extends ViewGroup {
         }
     }
 
-    public void refresh(int day, boolean flag) {
-        if (lastClickedView != null) {
-            setDayColor(lastClickedView, COLOR_RESET);
+    public void refresh(int lastYear, int lastMonth, int year, int month, int day, boolean flag) {
+        if (lastYear == year && lastMonth == month) {
+            if (lastClickedView != null) {//将上一个选中的日期清空
+                setDayColor(lastClickedView, COLOR_RESET);
+            }
+            if (!flag) {
+                return;
+            }
+            //找到当前选中的日期
+            View destView = findDestView(day);
+            if (destView != null) {
+                setDayColor(destView, COLOR_SET);
+                lastClickedView = destView;
+                invalidate();
+            }
+        }else {//不在同一个月 说明没有选中日期
+            if (lastClickedView != null) {//将上一个选中的日期清空
+                setDayColor(lastClickedView, COLOR_RESET);
+            }
+            if (!flag) {
+                return;
+            }
         }
-        if (!flag){
-            return;
-        }
-        View destView = findDestView(day);
-        setDayColor(destView, COLOR_SET);
-        lastClickedView = destView;
-        invalidate();
     }
 
     /**
@@ -382,18 +388,19 @@ public class MonthView extends ViewGroup {
         return view;
     }
 
-    public void setAttrValues(int[] dateInit,int[] dateStart,int[] dateEnd,
+    public void setAttrValues(int[] dateInit, int[] dateStart, int[] dateEnd,
                               boolean showLastNext, boolean showLunar, boolean showHoliday, boolean showTerm, boolean disableBefore,
-                              int colorSolar, int colorLunar, int colorHoliday, int colorChoose,
+                              boolean disableAfter, int colorSolar, int colorLunar, int colorHoliday, int colorChoose,
                               int sizeSolar, int sizeLunar, int dayBg) {
         this.dateInit = dateInit;
-        this.dateStart=dateStart;
-        this.dateEnd=dateEnd;
+        this.dateStart = dateStart;
+        this.dateEnd = dateEnd;
         this.showLastNext = showLastNext;
         this.showLunar = showLunar;
         this.showHoliday = showHoliday;
         this.showTerm = showTerm;
         this.disableBefore = disableBefore;
+        this.disableAfter = disableAfter;
         this.colorSolar = colorSolar;
         this.colorLunar = colorLunar;
         this.colorHoliday = colorHoliday;
